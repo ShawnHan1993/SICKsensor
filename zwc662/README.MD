@@ -1,4 +1,4 @@
-##README##
+**README**
 
 In test.py there is a 2-layer fully connected neural network train() and a dataset feeding function single_file().
 
