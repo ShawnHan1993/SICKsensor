@@ -83,9 +83,15 @@ def mlp_train(train_data, test_data):
 	correct_prediction = tf.equal(logits, y_)
 	accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
+	accuracy_mean = 0
+	vol = 0
 	for test_data_ in test_data:
 		for [batch_xs, batch_ys] in single_file(test_data_):
 			print(sess.run([accuracy], feed_dict={x: batch_xs, y_: batch_ys}))
+			accuracy_mean += accuracy
+			vol += 1
+	accuracy_mean /= vol
+	print("Average accuracy is %", accuracy_mean)
 
 
 if __name__ == '__main__':
