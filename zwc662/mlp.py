@@ -52,20 +52,20 @@ def mlp_train(train_data, test_data):
 	
 	sample = None
 
-	W1 = tf.Variable(tf.zeros([size_x[-1], 10]))
-	b1 = tf.Variable(tf.zeros([10]))
+	W1 = tf.Variable(tf.zeros([size_x[-1], 30]))
+	b1 = tf.Variable(tf.zeros([30]))
 	h1 = tf.nn.softplus(tf.matmul(x, W1) + b1)
 
-	W2 = tf.Variable(tf.zeros([10, 20]))
-	b2 = tf.Variable(tf.zeros([20]))
+	W2 = tf.Variable(tf.zeros([30, 60]))
+	b2 = tf.Variable(tf.zeros([60]))
 	h2 = tf.nn.relu(tf.matmul(h1, W2) + b2)
 
-	W3 = tf.Variable(tf.zeros([20, size_y[-1]]))
+	W3 = tf.Variable(tf.zeros([60, size_y[-1]]))
 	b3 = tf.Variable(tf.zeros([size_y[-1]]))
-	h3 = tf.matmul(h2, W3) + W3
+	h3 = tf.matmul(h2, W3) + b3
 
 	y = tf.sigmoid(h3)
-	logits = tf.where(y>0.5, tf.ones(tf.shape(y)), tf.zeros(tf.shape(y)))	
+	logits = tf.where(tf.greater(y, 0.5), tf.ones(tf.shape(y)), tf.zeros(tf.shape(y)))	
 	#y = tf.nn.softmax(tf.matmul(x, W) + b)
 	#cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y) + (1 - y_) * tf.log(1 - y), reduction_indices=[1]))
 	cross_entropy = -tf.reduce_sum(y_ * tf.log(y) + (1 - y_) * tf.log(1 - y))
@@ -85,7 +85,7 @@ def mlp_train(train_data, test_data):
 
 	for test_data_ in test_data:
 		for [batch_xs, batch_ys] in single_file(test_data_):
-			print(sess.run([accuracy, y_, logits], feed_dict={x: batch_xs, y_: batch_ys}))
+			print(sess.run([accuracy], feed_dict={x: batch_xs, y_: batch_ys}))
 
 
 if __name__ == '__main__':
