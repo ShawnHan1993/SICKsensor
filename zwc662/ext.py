@@ -177,34 +177,33 @@ for index in range(0, len(lines)):
 	else:
 		flag = False
 
-	for condition_data in root.iter('condition'):
-		if condition_data.tag == 'condition':
-			flag = True
-			condition = ET.Element(tag = 'condition')
+	condition = ET.Element(tag = 'condition')
+	#PDFw9612 = ET.SubElement(condition, 'PDFw9612')
+	#PDFNoRead = ET.SubElement(condition, 'PDFNoRead')
+	TooBig = ET.SubElement(condition, 'TooBig')
+	TooBig.text = '0'
 
-			#PDFw9612 = ET.SubElement(condition, 'PDFw9612')
-			#PDFNoRead = ET.SubElement(condition, 'PDFNoRead')
-			TooBig = ET.SubElement(condition, 'TooBig')
-			TooBig.text = '0'
-
-			NoRead = ET.SubElement(condition, 'NoRead')
-			NoRead.text = '0'
+	NoRead = ET.SubElement(condition, 'NoRead')
+	NoRead.text = '0'
 			
-			NotLFT = ET.SubElement(condition, 'NotLFT')
-			NotLFT.text = '0'
+	NotLFT = ET.SubElement(condition, 'NotLFT')
+	NotLFT.text = '0'
 
-			MultiRead = ET.SubElement(condition, 'MultiRead')
-			MultiRead.text = '0'
+	MultiRead = ET.SubElement(condition, 'MultiRead')
+	MultiRead.text = '0'
 
-			Irreg = ET.SubElement(condition, 'Irreg')
-			Irreg.text = '0'
+	Irreg = ET.SubElement(condition, 'Irreg')
+	Irreg.text = '0'
  
-			TooSmall = ET.SubElement(condition, 'TooSmall')
-			TooSmall.text = '0'
+	TooSmall = ET.SubElement(condition, 'TooSmall')
+	TooSmall.text = '0'
 
-			LFT = ET.SubElement(condition, 'LFT')
-			LFT.text = '0'	
+	LFT = ET.SubElement(condition, 'LFT')
+	LFT.text = '0'	
 			
+	for condition_data in root.iter('condition'):
+		if True or condition_data.tag == 'condition':
+
 			for condition_str in condition_data.text.split(','):
 				if condition_str == 'TooBig':
 					TooBig.text = '1'
@@ -212,6 +211,7 @@ for index in range(0, len(lines)):
 					NoRead.text = '1'
 				elif condition_str == 'NotLFT':	
 					NotLFT.text = '1'
+					flag = True
 				elif condition_str == 'MultiRead':
 					MultiRead.text = '1'
 				elif condition_str == 'Irreg':
@@ -220,12 +220,13 @@ for index in range(0, len(lines)):
 					TooSmall.text = '1'
 				elif condition_str == 'LFT':
 					LFT.text = '1'
+					flag = True
 						
-			objectdata.append(condition)
 	if flag is False:
 		data.remove(objectdata)
 		continue	
 	else:
+		objectdata.append(condition)
 		flag = False
 
 tree = ET.ElementTree(None)
