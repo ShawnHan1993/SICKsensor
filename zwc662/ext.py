@@ -1,13 +1,22 @@
 import xml.etree.ElementTree as ET
 import sys
 
-input_path = sys.argv[1]
-file_name = open(input_path, 'r')
-output_path = "objectdata_" + input_path.split('.')[1] + ".xml"
-data = ET.Element(tag = 'data', attrib = {'filename': input_path})
+def extract(input_path, LFT = False, NotLFT = False):
 
-lines = file_name.readlines()
-for index in range(0, len(lines)):
+
+ file_name = open(input_path, 'r')
+ if LFT is True:
+	output_path = "LFT_"
+ elif NotLFT is True:
+	output_path = "NotLFT_"
+ else:
+	output_path = "objectdata_"
+
+ output_path = output_path + input_path.split('.')[1] + ".xml"
+ data = ET.Element(tag = 'data', attrib = {'filename': input_path})
+
+ lines = file_name.readlines()
+ for index in range(0, len(lines)):
 #for index in range(0, 1):
 	line = lines[index]
 	line = "<data>" + line + "</data>"
@@ -174,8 +183,8 @@ for index in range(0, len(lines)):
 	if flag is False:
 		data.remove(objectdata)
 		continue	
-	else:
-		flag = False
+
+	flag = False
 
 	condition = ET.Element(tag = 'condition')
 	#PDFw9612 = ET.SubElement(condition, 'PDFw9612')
@@ -203,7 +212,6 @@ for index in range(0, len(lines)):
 			
 	for condition_data in root.iter('condition'):
 		if True or condition_data.tag == 'condition':
-
 			for condition_str in condition_data.text.split(','):
 				if condition_str == 'TooBig':
 					TooBig.text = '1'
@@ -212,6 +220,8 @@ for index in range(0, len(lines)):
 				elif condition_str == 'NotLFT':	
 					NotLFT.text = '1'
 					flag = True
+					if LFT is True:
+						flag = False
 				elif condition_str == 'MultiRead':
 					MultiRead.text = '1'
 				elif condition_str == 'Irreg':
@@ -221,6 +231,9 @@ for index in range(0, len(lines)):
 				elif condition_str == 'LFT':
 					LFT.text = '1'
 					flag = True
+					if NotLFT is True:
+						flag = False
+		
 						
 	if flag is False:
 		data.remove(objectdata)
@@ -229,7 +242,13 @@ for index in range(0, len(lines)):
 		objectdata.append(condition)
 		flag = False
 
-tree = ET.ElementTree(None)
-tree._setroot(data)
-#ET.dump(tree)
-tree.write(output_path)
+ tree = ET.ElementTree(None)
+ tree._setroot(data)
+ #ET.dump(tree)
+ tree.write(output_path)
+
+
+if __name__ == "__main__":
+	input_paths = sys.argv[1:]
+	for input_path in input_paths:
+		extract(input_path, LFT = True, NotLFT = False)
