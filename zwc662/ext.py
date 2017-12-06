@@ -1,13 +1,13 @@
 import xml.etree.ElementTree as ET
 import sys
 
-def extract(input_path, LFT = False, NotLFT = False):
+def extract(input_path, _LFT = False, _NotLFT = False):
 
 
  file_name = open(input_path, 'r')
- if LFT is True:
+ if _LFT is True:
 	output_path = "LFT_"
- elif NotLFT is True:
+ elif _NotLFT is True:
 	output_path = "NotLFT_"
  else:
 	output_path = "objectdata_"
@@ -218,7 +218,7 @@ def extract(input_path, LFT = False, NotLFT = False):
 				elif condition_str == 'NoRead':
 					NoRead.text = '1'
 				elif condition_str == 'NotLFT':	
-					if NotLFT is True:
+					if _NotLFT is True:
 						NotLFT.text = '1'
 						flag = True
 				elif condition_str == 'MultiRead':
@@ -228,7 +228,7 @@ def extract(input_path, LFT = False, NotLFT = False):
 				elif condition_str == 'TooSmall':
 					TooSmall.text = '1'
 				elif condition_str == 'LFT':
-					if LFT is True:
+					if _LFT is True:
 						LFT.text = '1'
 						flag = True
 		
@@ -249,5 +249,5 @@ def extract(input_path, LFT = False, NotLFT = False):
 if __name__ == "__main__":
 	input_paths = sys.argv[1:]
 	for input_path in input_paths:
-		#extract(input_path, LFT = True, NotLFT = False)
-		extract(input_path, LFT = False, NotLFT = True)
+		extract(input_path, _LFT = True, _NotLFT = False)
+		extract(input_path, _LFT = False, _NotLFT = True)
