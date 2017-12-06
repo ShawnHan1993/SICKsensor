@@ -218,10 +218,9 @@ def extract(input_path, LFT = False, NotLFT = False):
 				elif condition_str == 'NoRead':
 					NoRead.text = '1'
 				elif condition_str == 'NotLFT':	
-					NotLFT.text = '1'
-					flag = True
-					if LFT is True:
-						flag = False
+					if NotLFT is True:
+						NotLFT.text = '1'
+						flag = True
 				elif condition_str == 'MultiRead':
 					MultiRead.text = '1'
 				elif condition_str == 'Irreg':
@@ -229,10 +228,9 @@ def extract(input_path, LFT = False, NotLFT = False):
 				elif condition_str == 'TooSmall':
 					TooSmall.text = '1'
 				elif condition_str == 'LFT':
-					LFT.text = '1'
-					flag = True
-					if NotLFT is True:
-						flag = False
+					if LFT is True:
+						LFT.text = '1'
+						flag = True
 		
 						
 	if flag is False:
@@ -251,4 +249,5 @@ def extract(input_path, LFT = False, NotLFT = False):
 if __name__ == "__main__":
 	input_paths = sys.argv[1:]
 	for input_path in input_paths:
-		extract(input_path, LFT = True, NotLFT = False)
+		#extract(input_path, LFT = True, NotLFT = False)
+		extract(input_path, LFT = False, NotLFT = True)
