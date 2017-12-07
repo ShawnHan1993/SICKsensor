@@ -5,6 +5,36 @@ import tensorflow as tf
 import sys
 from tensorflow.contrib import rnn
 
+def batch(objectdata = None):
+        batch_xs = [[
+			#1.0,
+			float(objectdata.find('conveyor_speed').find('cve').text),
+			float(objectdata.find('size').find('ohe').text),
+			float(objectdata.find('size').find('owi').text),
+			float(objectdata.find('size').find('ole').text),
+			float(objectdata.find('weight').find('owe').text),
+			float(objectdata.find('gap').find('oga').text),
+			float(objectdata.find('volume').find('obv').text),
+			float(objectdata.find('orientation').find('oa').text),
+			float(objectdata.find('speed').find('otve').text),
+			#float(objectdata.find('condition').find('TooBig').text),
+			#float(objectdata.find('condition').find('NoRead').text),
+			#float(objectdata.find('condition').find('MultiRead').text),
+			#float(objectdata.find('condition').find('Irreg').text),
+			#float(objectdata.find('condition').find('TooSmall').text),
+			#float(objectdata.find('condition').find('LFT').text),
+			#float(objectdata.find('condition').find('NotLFT').text),
+		]]
+	batch_ys = [
+			#float(objectdata.find('condition').find('TooBig').text),
+			#float(objectdata.find('condition').find('NoRead').text),
+			float(objectdata.find('condition').find('NotLFT').text),
+			#float(objectdata.find('condition').find('MultiRead').text),
+			#float(objectdata.find('condition').find('Irreg').text),
+			#float(objectdata.find('condition').find('TooSmall').text),
+			float(objectdata.find('condition').find('LFT').text),
+			]
+	return [batch_xs, batch_ys]	
 
 def single_file(path = './obj_dat/objectdata_2017-07-06.xml'):
 	file_name = open(path, 'r')
@@ -13,175 +43,168 @@ def single_file(path = './obj_dat/objectdata_2017-07-06.xml'):
 	root = ET.fromstring(line)
 	data=root.getiterator('objectivedata')
 	for i in data:
-        	batch_xs = [[
-				1.0,
-				#float(i.find('conveyor_speed').find('cve').text),
-				#float(i.find('size').find('ohe').text),
-				#float(i.find('size').find('owi').text),
-				#float(i.find('size').find('ole').text),
-				#float(i.find('weight').find('owe').text),
-				#float(i.find('gap').find('oga').text),
-				#float(i.find('volume').find('obv').text),
-				#float(i.find('orientation').find('oa').text),
-				#float(i.find('speed').find('otve').text),
+		yield batch(i)
 
-				float(i.find('condition').find('TooBig').text),
-				#float(i.find('condition').find('NoRead').text),
-				float(i.find('condition').find('MultiRead').text),
-				float(i.find('condition').find('Irreg').text),
-				float(i.find('condition').find('TooSmall').text),
-				#float(i.find('condition').find('LFT').text),
-				#float(i.find('condition').find('NotLFT').text),
-				]]
-		batch_ys = [
-				#float(i.find('condition').find('TooBig').text),
-				#float(i.find('condition').find('NoRead').text),
-				float(i.find('condition').find('NotLFT').text),
-				#float(i.find('condition').find('MultiRead').text),
-				#float(i.find('condition').find('Irreg').text),
-				#float(i.find('condition').find('TooSmall').text),
-				float(i.find('condition').find('LFT').text),
-				]	
-	
-		yield [batch_xs, batch_ys]
+def multiple_files(paths = ['./obj_dat/objectdata_2017-07-06.xml']):
+	file_names = []
+	lines = []
+	for path in paths:
+		file_names.append(open(path, 'r'))
+		lines.append(file_names[-1].readlines())
 
-def mlp_train(train_data, test_data):
-	sample = single_file(train_data[0]).next()
-	
-	size_x = np.array(sample[0]).shape
-	size_y = np.array(sample[1]).shape
+	roots = []
+	datas = []
+	for l in range(len(lines)):
+		line = lines[l][0]
+		roots.append(ET.fromstring(line))
+		datas.append(roots[-1].getiterator('objectivedata'))
 
-	x = tf.placeholder(tf.float32, size_x)
-	y_ = tf.placeholder(tf.float32, size_y)
-	
-	sample = None
+	for data in range(len(datas[0])):
+		for item in range(len(datas)):
+			yield batch(datas[item][data])
 
-	W1 = tf.Variable(tf.zeros([size_x[-1], 30]))
-	b1 = tf.Variable(tf.zeros([30]))
-	h1 = tf.nn.softplus(tf.matmul(x, W1) + b1)
 
-	W2 = tf.Variable(tf.zeros([30, 60]))
-	b2 = tf.Variable(tf.zeros([60]))
-	h2 = tf.nn.relu(tf.matmul(h1, W2) + b2)
-
-	W3 = tf.Variable(tf.zeros([60, size_y[-1]]))
-	b3 = tf.Variable(tf.zeros([size_y[-1]]))
-	h3 = tf.matmul(h2, W3) + b3
-
-	y = tf.sigmoid(h3)
-	logits = tf.where(tf.greater(y, 0.5), tf.ones(tf.shape(y)), tf.zeros(tf.shape(y)))	
-	#y = tf.nn.softmax(tf.matmul(x, W) + b)
-	#cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y) + (1 - y_) * tf.log(1 - y), reduction_indices=[1]))
-	cross_entropy = -tf.reduce_sum(y_ * tf.log(y) + (1 - y_) * tf.log(1 - y))
-	train_step = tf.train.GradientDescentOptimizer(0.1).minimize(cross_entropy)
-	sess = tf.InteractiveSession()
-	tf.global_variables_initializer().run()
-
-	for train_data_ in train_data:	
-		for [batch_xs, batch_ys] in single_file(train_data_):
-			#if batch_xs[0][1]==batch_xs[0][-1]:
-			#	print("LFT and NotLFT are same")
-			#	raise Error
- 			sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
-
-	correct_prediction = tf.equal(logits, y_)
-	accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-	accuracy_total = tf.Variable(tf.zeros(tf.shape(accuracy)))
-	batches = 0.0
-
-	for test_data_ in test_data:
-		for [batch_xs, batch_ys] in single_file(test_data_):
-			sess.run(accuracy, feed_dict={x: batch_xs, y_: batch_ys})
-			accuracy_total += accuracy
-			batches += 1
-		avg_acc = accuracy_total / batches
-		tf.summary("average accuracy", avg_acc)		
-
-		print(avg_acc)
-
-def mlp_train_v1(train_data_main, train_data_aux, test_data):
+def mlp_train(train_data_main, train_data_aux, test_data, perturb = True):
 	data_num = 0
-
 	sample = single_file(train_data_main[0]).next()
 	
 	size_x = np.array(sample[0]).shape
+	n_input = size_x[-1]
 	size_y = np.array(sample[1]).shape
+	n_output = size_y[-1]
 
-	x = tf.placeholder(tf.float32, size_x)
-	y_ = tf.placeholder(tf.float32, size_y)
+
+	x = tf.placeholder(tf.float32, [None, n_input])
+	y_ = tf.placeholder(tf.float32, [None, n_output])
 	
 	sample = None
+	'''
 
-	W1 = tf.Variable(tf.zeros([size_x[-1], 10]))
-	b1 = tf.Variable(tf.zeros([10]))
-	h1 = tf.nn.softplus(tf.matmul(x, W1) + b1)
+	W1 = tf.Variable(tf.zeros([n_input, 2]), dtype=tf.float32)
+	b1 = tf.Variable(tf.zeros([2]), dtype=tf.float32)
+	#h1 = tf.sigmoid(tf.matmul(x, W1) + b1)
+	h1 = tf.matmul(x, W1) + b1
 
-	W2 = tf.Variable(tf.zeros([10, 100]))
-	b2 = tf.Variable(tf.zeros([100]))
-	h2 = tf.nn.softmax(tf.matmul(h1, W2) + b2)
+	W2 = tf.Variable(tf.zeros([2, 3]), dtype=tf.float32)
+	b2 = tf.Variable(tf.zeros([3]), dtype=tf.float32)
+	#h2 = tf.nn.relu(tf.matmul(h1, W2) + b2)
+	h2 = tf.matmul(h1, W2) + b2
 
-	W3 = tf.Variable(tf.zeros([100, 200]))
-	b3 = tf.Variable(tf.zeros([200]))
-	h3 = tf.nn.relu(tf.matmul(h2, W3) + b3)
 
-	W0 = tf.Variable(tf.zeros([200, size_y[-1]]))
-	b0 = tf.Variable(tf.zeros([size_y[-1]]))
-	h0 = tf.matmul(h3, W0) + b0
+	W3 = tf.Variable(tf.zeros([5, 3]), dtype=tf.float32)
+	b3 = tf.Variable(tf.zeros([3]), dtype=tf.float32)
+	#h3 = tf.nn.relu(tf.matmul(h2, W3) + b3)
+	h3 = tf.matmul(h2, W3) + b3
 
+	W4 = tf.Variable(tf.zeros([3, 2]), dtype=tf.float32)
+	b4 = tf.Variable(tf.zeros([2]), dtype=tf.float32)
+	#h4 = tf.nn.relu(tf.matmul(h3, W4) + b4)
+	h4 = tf.matmul(h3, W4) + b4
+
+	W5 = tf.Variable(tf.zeros([2, 2]), dtype=tf.float32)
+	b5 = tf.Variable(tf.zeros([2]), dtype=tf.float32)
+	#h5 = tf.nn.relu(tf.matmul(h4, W5) + b5)
+	h5 = tf.matmul(h4, W5) + b5
+
+	W6 = tf.Variable(tf.zeros([2, 2]), dtype=tf.float32)
+	b6 = tf.Variable(tf.zeros([2]), dtype=tf.float32)
+	#h6 = tf.nn.relu(tf.matmul(h5, W6) + b6)
+	h6 = tf.matmul(h5, W6) + b6
+	'''
+
+	W0 = tf.Variable(tf.zeros([n_input, n_output]), dtype=tf.float32)
+	b0 = tf.Variable(tf.zeros([n_output]), dtype=tf.float32)
+	h0 = tf.matmul(x, W0) + b0
+
+	#y = tf.sigmoid(h0)
 	y = tf.sigmoid(h0)
 	logits = tf.where(tf.greater(y, 0.5), tf.ones(tf.shape(y)), tf.zeros(tf.shape(y)))	
-	#y = tf.nn.softmax(tf.matmul(x, W) + b)
-	#cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y) + (1 - y_) * tf.log(1 - y), reduction_indices=[1]))
-	cross_entropy = -tf.reduce_sum(y_ * tf.log(y) + (1 - y_) * tf.log(1 - y))
-	train_step = tf.train.GradientDescentOptimizer(0.8).minimize(cross_entropy)
-	sess = tf.InteractiveSession()
-	tf.global_variables_initializer().run()
+	#logits = y
+	#cross_entropy = -tf.reduce_sum(y_ * tf.log(y) + (1 - y_) * tf.log(1 - y))
+	cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y, labels=y_))
+	train_step = tf.train.GradientDescentOptimizer(0.1).minimize(cross_entropy)
+	init = tf.global_variables_initializer()
 
-	for train_data_ in train_data_main:	
-		for [batch_xs, batch_ys] in single_file(train_data_):
-			#if batch_xs[0][1]==batch_xs[0][-1]:
-			#	print("LFT and NotLFT are same")
-			#	raise Error
- 			sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
-			data_num = data_num + 1
-	data_num_ = data_num
-	print("Main training data has %d batches" % data_num)
-	for train_data_ in train_data_aux:
-		for [batch_xs, batch_ys] in single_file(train_data_):
-			#if batch_xs[0][1]==batch_xs[0][-1]:
-			#	print("LFT and NotLFT are same")
-			#	raise Error
- 			sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
-			data_num_ = data_num_ - 1
-			if data_num_ == 0:
-				break
-		if data_num_ == 0:
-			break
+	with tf.Session() as sess:
+		sess.run(init)
+		if perturb is True:
+			for [batch_xs, batch_ys] in multiple_files(train_data_main + train_data_aux):
+				print [batch_xs, batch_ys]
+				if batch_xs[0][-4:] == [0.0, 0.0, 0.0, 0.0] and batch_ys == [1, 0]:
+					continue
+ 				sess.run(train_step, feed_dict={x: np.reshape(batch_xs, [-1, n_input]), 
+								y_: np.reshape(batch_ys, [-1, n_output])})
+				data_num = data_num + 1
 
+		else:
+			for train_data_ in train_data_main:	
+				for [batch_xs, batch_ys] in single_file(train_data_):
+				#if batch_xs[0][1]==batch_xs[0][-1]:
+				#	print("LFT and NotLFT are same")
+				#	raise Error
+ 					sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
+					data_num = data_num + 1
+				
+			data_num_ = data_num
+			print("Main training data has %d batches" % data_num)
+			for train_data_ in train_data_aux:
+				for [batch_xs, batch_ys] in single_file(train_data_):
+				#if batch_xs[0][1]==batch_xs[0][-1]:
+				#	print("LFT and NotLFT are same")
+				#	raise Error
+ 					sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
+					data_num_ = data_num_ - 1
+					if data_num_ == 0:
+						break
+				if data_num_ == 0:
+					break
+	
+				
+				
 
-	print("Testing...")
-	writer = tf.summary.FileWriter('./log', sess.graph)
-	correct_prediction = tf.equal(logits, y_)
-	accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))	
-	average_accuracy = 0.0
-	batches = 0.0
-	accuracy_summary = tf.Summary()
-	accuracy_summary.value.add(tag='accuracy', simple_value=average_accuracy)
+		print("Testing...")
+		writer = tf.summary.FileWriter('./log', sess.graph)
+		correct_prediction = tf.equal(logits, y_)
+		accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))	
+		average_accuracy = 0.0
+		batches = 0.0
+		accuracy_summary = tf.Summary()
+		accuracy_summary.value.add(tag='accuracy', simple_value=average_accuracy)
 
-	for test_data_ in test_data:
-		for [batch_xs, batch_ys] in single_file(test_data_):
-			if batches == data_num:
-				break
-			print(sess.run(correct_prediction, feed_dict={x: batch_xs, y_: batch_ys}))
-			average_accuracy += accuracy.eval(feed_dict={x:batch_xs, y_: batch_ys})
-			batches += 1
-		average_accuracy = average_accuracy / batches
-		print(average_accuracy)
-		#v_accuracy_s = tf.summary.scalar('average_accuracy', average_accuracy)
-		#valid_summaries = tf.summary.merge([v_accuracy_s], name = 'valid_summaries')
-		accuracy_summary.value[0].simple_value = average_accuracy
-		writer.add_summary(accuracy_summary)
-
+		if perturb is True:
+			for [batch_xs, batch_ys] in multiple_files(train_data_main + train_data_aux):
+				if batch_xs[0][-4:] == [0.0, 0.0, 0.0, 0.0] and batch_ys == [1, 0]:
+					continue
+				current_accuracy = accuracy.eval(feed_dict={x: np.reshape(batch_xs, [-1, n_input]),
+									     y_: np.reshape(batch_ys, [-1, n_output])})
+				if current_accuracy < 1: 
+ 					print(sess.run([x, y_, y], feed_dict={x: np.reshape(batch_xs, [-1, n_input]), 
+									   	   y_: np.reshape(batch_ys, [-1, n_output])}))
+				average_accuracy += current_accuracy
+				batches += 1
+			average_accuracy = average_accuracy / batches
+			print(average_accuracy)
+			#v_accuracy_s = tf.summary.scalar('average_accuracy', average_accuracy)
+			#valid_summaries = tf.summary.merge([v_accuracy_s], name = 'valid_summaries')
+			accuracy_summary.value[0].simple_value = average_accuracy
+			writer.add_summary(accuracy_summary)
+	
+			
+		else:
+			for test_data_ in test_data:
+				for [batch_xs, batch_ys] in single_file(test_data_):
+					if batches == data_num:
+						break
+					print(sess.run([y_, y], feed_dict={x: batch_xs, y_: batch_ys}))
+					average_accuracy += accuracy.eval(feed_dict={x:batch_xs, y_: batch_ys})
+					batches += 1
+				average_accuracy = average_accuracy / batches
+				print(average_accuracy)
+				#v_accuracy_s = tf.summary.scalar('average_accuracy', average_accuracy)
+				#valid_summaries = tf.summary.merge([v_accuracy_s], name = 'valid_summaries')
+				accuracy_summary.value[0].simple_value = average_accuracy
+				writer.add_summary(accuracy_summary)
+	
 def RNN(x, weight, bias, timesteps, n_input, n_hidden):
 	#x = tf.reshape(np.array(x), [None, timesteps, n_input])
  	#x = tf.split(x, n_input, 1)
@@ -192,13 +215,28 @@ def RNN(x, weight, bias, timesteps, n_input, n_hidden):
     # we only want the last output
 	return tf.matmul(outputs[-1], weight) + bias
 
-def RNN_MC_dropout(x, weight, bias, timesteps, n_input, n_hidden, p = 0.9, B = 10 ):
+def RNN_with_dropout(x, weight, bias, timesteps, n_input, n_hidden, p = 0.9, B = 10 ):
 	x = tf.unstack(x, timesteps, 1)
-	lstm_cell = rnn.BasicLSTMCell(n_hidden, forget_bias = 1.0)
-	outputs, states = rnn.static_rnn(lstm_cell, x, dtype = tf.float32)
+	lstm_cell_1 = rnn.BasicLSTMCell(n_hidden, forget_bias = 1.0)
+	lstm_cell_2 = rnn.BasicLSTMCell(n_hidden, forget_bias = 1.0)
+	outputs_1, states_1 = rnn.static_rnn(lstm_cell_1, x, dtype = tf.float32)
     # there are n_input outputs but
     # we only want the last output
-	return tf.matmul(outputs[-1], weight) + bias
+	hidden_1 = []
+	for i in range(B - 1):
+		hidden_1.append(tf.nn.dropout(outputs_1, p))
+	hidden_1_  = tf.reduce_mean(tf.stack(hidden_1, axis = -1), axis = 1)
+
+	#assert tf.shape(hidden_1_) == tf.shape(x)
+
+	outputs_2, states_2 = rnn.static_rnn(lstm_cell_2, hidden_1_, dtype = tf.float32)
+	hidden_2 = []
+	for i in range(B - 1):
+		hidden_2.append(tf.nn.dropout(outputs_2, p))
+	hidden_2_  = tf.reduce_mean(tf.stack(hidden_2, axis = -1), axis = 1)
+	#assert tf.shape(hidden_2_) == tf.shape(x)
+	return tf.matmul(hidden_2_[-1], weight) + bias
+	
 
 def RNN_mlp_train_v1(train_data_main, train_data_aux, test_data, timesteps = 30):
 	sample = single_file(train_data_main[0]).next()
@@ -210,32 +248,37 @@ def RNN_mlp_train_v1(train_data_main, train_data_aux, test_data, timesteps = 30)
 
 	n_hidden = 2 * size_y[-1]
 
-	x = tf.placeholder(tf.float32, [None, timesteps, n_input])
+	x = tf.placeholder(tf.float32, [None, timesteps, n_input + n_output])
 	y_ = tf.placeholder(tf.float32, [None, n_output])
 	
 	sample = None
 
-	W1 = tf.Variable(tf.zeros([n_hidden, 10]))
-	b1 = tf.Variable(tf.zeros([10]))
-	h1 = tf.nn.softplus(RNN(x, W1, b1, timesteps, n_input, n_hidden))
+	W1 = tf.Variable(tf.zeros([n_hidden, 10]) ,dtype=tf.float32)
+	b1 = tf.Variable(tf.zeros([10]) ,dtype=tf.float32)
+	h1 = tf.nn.softplus(RNN_with_dropout(x, W1, b1, timesteps, n_input + n_output, n_hidden))
 
-	W2 = tf.Variable(tf.zeros([10, 100]))
-	b2 = tf.Variable(tf.zeros([100]))
+	'''
+	W2 = tf.Variable(tf.zeros([10, 100]), dtype=tf.float32)
+	b2 = tf.Variable(tf.zeros([100]), dtype=tf.float32)
 	h2 = tf.nn.softmax(tf.matmul(h1, W2) + b2)
 
-	W3 = tf.Variable(tf.zeros([100, 200]))
-	b3 = tf.Variable(tf.zeros([200]))
+	W3 = tf.Variable(tf.zeros([100, 200]), dtype=tf.float32)
+	b3 = tf.Variable(tf.zeros([200]), dtype=tf.float32)
 	h3 = tf.nn.relu(tf.matmul(h2, W3) + b3)
+	'''
 
-	W0 = tf.Variable(tf.zeros([200, n_output]))
-	b0 = tf.Variable(tf.zeros([n_output]))
-	h0 = tf.sigmoid(tf.matmul(h3, W0) + b0)
+	W0 = tf.Variable(tf.zeros([10, n_output]), dtype=tf.float32)
+	b0 = tf.Variable(tf.zeros([n_output]), dtype=tf.float32)
+	h0 = tf.matmul(h1, W0) + b0
 
-	logits = tf.where(tf.greater(h0, 0.5), tf.ones(tf.shape(h0)), tf.zeros(tf.shape(h0)))	
+	y = tf.sigmoid(h0)
+
+	logits = tf.where(tf.greater(y, 0.5), tf.ones(tf.shape(y)), tf.zeros(tf.shape(y)))	
 	#y = tf.nn.softmax(tf.matmul(x, W) + b)
 	#cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y) +1 - y_) * tf.log(1 - y), reduction_indices=[1]))
-	loss = -tf.reduce_sum(y_ * tf.log(h0) + (1 - y_) * tf.log(1 - h0))
-	train_step = tf.train.GradientDescentOptimizer(0.5).minimize(loss)
+	#loss = -tf.reduce_sum(y_ * tf.log(h0) + (1 - y_) * tf.log(1 - h0))
+	cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y, labels=y_))
+	train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
 	
 	init = tf.global_variables_initializer()
 
@@ -253,14 +296,15 @@ def RNN_mlp_train_v1(train_data_main, train_data_aux, test_data, timesteps = 30)
 			batch_xs = []
 			batch_ys = []
 			for [batch_x, batch_y] in single_file(train_data_):
+				batch_ys.append(batch_y)
+				batch_xs.append(batch_x[0] + [0.0 for i in range(len(batch_y))])
 				if len(batch_xs) >= timesteps:
-					sess.run(train_step, feed_dict={x: np.reshape(np.array(batch_xs), [-1, timesteps, n_input]),
+					sess.run(train_step, feed_dict={x: np.reshape(np.array(batch_xs), [-1, timesteps, n_input + n_output]),
 								     	y_: np.reshape(np.array(batch_ys[-1]), [1, n_output])})
 					batch_xs = batch_xs[1:]
 					batch_ys = batch_ys[1:]
-				batch_ys.append(batch_y)
-				batch_xs.append(batch_x)
 					#steps += 1 
+				batch_xs[-1] = batch_x[0] + batch_y
 				data_num = data_num + 1
 		
 		print("Main training data has %d batches" % data_num)
@@ -271,14 +315,15 @@ def RNN_mlp_train_v1(train_data_main, train_data_aux, test_data, timesteps = 30)
 			batch_xs = []
 			batch_ys = []
 			for [batch_x, batch_y] in single_file(train_data_):
+				batch_ys.append(batch_y)
+				batch_xs.append(batch_x[0] + [0.0 for i in range(len(batch_y))])
 				if len(batch_xs) >= timesteps:
-					sess.run(train_step, feed_dict={x: np.reshape(np.array(batch_xs), [-1, timesteps, n_input]),
+					sess.run(train_step, feed_dict={x: np.reshape(np.array(batch_xs), [-1, timesteps, n_input + n_output]),
 								     	y_: np.reshape(np.array(batch_ys[-1]), [1, n_output])})
 					batch_xs = batch_xs[1:]
 					batch_ys = batch_ys[1:]
-				batch_ys.append(batch_y)
-				batch_xs.append(batch_x)
-					#steps += 1 
+				batch_xs[-1] = batch_x[0] + batch_y
+				#steps += 1 
 				data_num_ = data_num_ - 1
 				if data_num_ == 0:
 					break
@@ -300,16 +345,22 @@ def RNN_mlp_train_v1(train_data_main, train_data_aux, test_data, timesteps = 30)
 			for [batch_x, batch_y] in single_file(train_data_):
 				if batches == data_num:
 					break
+				batch_ys.append(batch_y)
+				batch_xs.append(batch_x[0] + [0.0 for i in range(len(batch_y))])
 				if len(batch_xs) >= timesteps:
-					print(sess.run(correct_prediction, feed_dict={x: np.reshape(np.array(batch_xs), [-1, timesteps, n_input]),
-								     	y_: np.reshape(np.array(batch_ys[-1]), [1, n_output])}))
-					average_accuracy += accuracy.eval(feed_dict={x: np.reshape(np.array(batch_xs), [-1, timesteps, n_input]),
+					current_accuracy = accuracy.eval(feed_dict={x: np.reshape(np.array(batch_xs), [-1, timesteps, n_input + n_output]),
 								     	y_: np.reshape(np.array(batch_ys[-1]), [1, n_output])})
+					average_accuracy += current_accuracy
+					if current_accuracy < 1:
+						print(sess.run([y_, y], feed_dict={x: np.reshape(np.array(batch_xs), [-1, timesteps, n_input + n_output]),
+								     		     y_: np.reshape(np.array(batch_ys[-1]), [1, n_output])}))
+					#if current_accuracy == 1 and batch_y[-1] == 0:
+						#print(sess.run([y_, logits], feed_dict={x: np.reshape(np.array(batch_xs), [-1, timesteps, n_input + n_output]),
+						#		     		     y_: np.reshape(np.array(batch_ys[-1]), [1, n_output])}))
 					batches += 1
 					batch_xs = batch_xs[1:]
 					batch_ys = batch_ys[1:]
-				batch_ys.append(batch_y)
-				batch_xs.append(batch_x)
+				batch_xs[-1] = batch_x[0] + batch_y
 
 			average_accuracy = average_accuracy / batches
 			print(average_accuracy)
@@ -340,8 +391,9 @@ def unbias_train_NotLFT():
 	print train_data_aux
 	print test_data
 
-	mlp_train_v1(train_data_main, train_data_aux, test_data)
-	#RNN_mlp_train_v1(train_data_main, train_data_aux = [], test_data)
+	mlp_train(train_data_main, train_data_aux, test_data)
+	#train_data_aux = []
+	#RNN_mlp_train_v1(train_data_main, train_data_aux, test_data)
 	
 
 if __name__ == '__main__':

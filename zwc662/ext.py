@@ -221,6 +221,11 @@ def extract(input_path, _LFT = False, _NotLFT = False):
 					if _NotLFT is True:
 						NotLFT.text = '1'
 						flag = True
+					elif _LFT is True:
+						flag = False
+					else:
+						NotLFT.text = '1'
+						flag = True
 				elif condition_str == 'MultiRead':
 					MultiRead.text = '1'
 				elif condition_str == 'Irreg':
@@ -229,6 +234,11 @@ def extract(input_path, _LFT = False, _NotLFT = False):
 					TooSmall.text = '1'
 				elif condition_str == 'LFT':
 					if _LFT is True:
+						LFT.text = '1'
+						flag = True
+					elif _NotLFT is True:
+						flag = False
+					else:
 						LFT.text = '1'
 						flag = True
 		
@@ -249,5 +259,6 @@ def extract(input_path, _LFT = False, _NotLFT = False):
 if __name__ == "__main__":
 	input_paths = sys.argv[1:]
 	for input_path in input_paths:
-		extract(input_path, _LFT = True, _NotLFT = False)
-		extract(input_path, _LFT = False, _NotLFT = True)
+#		extract(input_path, _LFT = True, _NotLFT = False)
+#		extract(input_path, _LFT = False, _NotLFT = True)
+		extract(input_path)
