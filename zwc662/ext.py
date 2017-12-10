@@ -35,6 +35,7 @@ def extract(input_path, _LFT = False, _NotLFT = False):
 		for tokenid in root.iter('tokenid'):
 			#print tokenid.text
 			token = tokenid.text
+			
 	else:
 		continue
 	flag = False
@@ -42,7 +43,31 @@ def extract(input_path, _LFT = False, _NotLFT = False):
 	objectdata = ET.SubElement(data, 'objectivedata')
 
 	objectdata.attrib = {'tokenid': token} 
+	
 
+
+	time = ET.Element(tag = 'time')
+	date_time_str = token.split('2017-07-')[-1]
+	
+	date_str = date_time_str.split('T')[0]
+	date = ET.SubElement(time, 'day')
+	date.text = date_str
+
+	time_str = date_time_str.split('T')[1].split(':')
+	
+	time_h = time_str[0]
+	hours = ET.SubElement(time, 'h')
+	hours.text = time_h
+	
+	time_min = time_str[1]
+	mins = ET.SubElement(time, 'min')
+	mins.text = time_min
+
+	time_s = time_str[2]
+	secs = ET.SubElement(time, 'sec')
+	secs.text = time_s
+	
+	objectdata.append(time)
 	#object size
 	for volumetric in root.iter('volumetric'):
 		for size in volumetric.iter('size'): 
@@ -94,6 +119,25 @@ def extract(input_path, _LFT = False, _NotLFT = False):
 	else:
 		flag = False
 	#gap
+	for general in root.iter('general'):
+		for oga in general.iter('oga'):
+			if oga.tag == 'oga':
+				flag = True
+				#print oga.get('unit')
+				unit = oga.get('unit')
+				gapdata = ET.Element(tag = 'gap', attrib = {'unit':unit})
+
+				#print oga.find('value').text
+				gap = ET.SubElement(gapdata, 'oga')
+				gap.text = oga.find('value').text
+
+				objectdata.append(gapdata)
+	if flag is False:
+		data.remove(objectdata)
+		continue	
+	else:
+		flag = False
+
 	for general in root.iter('general'):
 		for oga in general.iter('oga'):
 			if oga.tag == 'oga':
