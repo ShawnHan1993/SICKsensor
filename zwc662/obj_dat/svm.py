@@ -5,16 +5,20 @@ import scipy.optimize #fmin_cg to train the linear regression
 from sklearn import svm #SVM software
 from sklearn import preprocessing
 import xml.etree.ElementTree as ET
+from sklearn.decomposition import PCA
 
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
-def plotData(pos, neg=None, cPos='r',markPos='o', cNeg='b', markNeg='^', mySvm=None):
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(pos[:, 0], pos[:, 1], pos[:, 2], c=cPos, marker=markPos)
-    if neg != None:
-        ax.scatter(neg[:, 0], neg[:, 1], neg[:, 2], c=cNeg, marker=markNeg)
+def plotData(layout, fig, pos, neg=None, cPos='r',markPos='o', cNeg='b', markNeg='^', mySvm=None):
+    
+    ax = fig.add_subplot(layout, projection='3d')
+    pca = PCA(n_components=3)
+    pos_pca = pca.fit_transform(pos)
+    ax.scatter(pos_pca[:, 0], pos_pca[:, 1], pos_pca[:, 2], c=cPos, marker=markPos)
+    if type(neg) == type(np.array([])):
+        neg_pca = pca.fit_transform(neg)
+        ax.scatter(neg_pca[:, 0], neg_pca[:, 1], neg_pca[:, 2], c=cNeg, marker=markNeg)
         if mySvm != None:
             h = 0.1
             x1min = np.min((np.min(pos[:, 0]), np.min(neg[:, 0]) ))
@@ -23,12 +27,11 @@ def plotData(pos, neg=None, cPos='r',markPos='o', cNeg='b', markNeg='^', mySvm=N
             x2max = np.max((np.max(pos[:, 1]), np.max(neg[:, 1]) ))
             x3min = np.min((np.min(pos[:, 2]), np.min(neg[:, 2]) ))
             x3max = np.max((np.max(pos[:, 2]), np.max(neg[:, 2]) ))
-
             x1, x2, x3 = np.meshgrid(np.arange(x1min, x1max, h), np.arange(x2min, x2max, h), np.arange(x3min, x3max, h))
             Z = mySvm.predict(np.c_[x1.ravel(), x2.ravel(), x3.ravel()])
             ax.plot_surface(x1, x2, x3, rstride=8, cstride=8, alpha=0.3)
             #cset = ax.contourf(x1, , Z, zdir='z')
-    plt.show()
+    
 
 def construct_data(name, interval, batch_size = 100): # an output data in the form of (array(...), array(...)) for the designated file
 
@@ -78,16 +81,18 @@ def construct_data(name, interval, batch_size = 100): # an output data in the fo
         #min_max_scaler = preprocessing.MinMaxScaler()
         #batch_x = min_max_scaler.fit_transform(batch_x)
         batch_x = preprocessing.scale(batch_x)
-        yield batch_x, batch_y
+    return batch_x, batch_y
+fig = plt.figure()
 
 gaus_svm = None
-for X, y in construct_data("D:/work/cs542/SICKsensor/zwc662/obj_dat/objectdata_2017-07-06.xml", (0, 0.7), batch_size = -1):
-    #pos = np.array([X[i] for i in range(X.shape[0]) if y[i] == 1])
-    #neg = np.array([X[i] for i in range(X.shape[0]) if y[i] == 0])
+X, y = construct_data("D:/work/cs542/SICKsensor/zwc662/obj_dat/objectdata_2017-07-06.xml", (0, 0.7), batch_size = -1)
+pos = np.array([X[i] for i in range(X.shape[0]) if y[i] == 1])
+neg = np.array([X[i] for i in range(X.shape[0]) if y[i] == 0])
 
-    #plotData(pos, neg[:500])
-    gaus_svm = svm.SVC(C=2, kernel='rbf', gamma=100)
-    gaus_svm.fit( X, y.flatten() )
+#plotData(pos[:500], neg[:500])
+min_num = min(pos.shape[0], neg.shape[0])
+gaus_svm = svm.SVC(C=2, kernel='sigmoid')
+gaus_svm.fit( np.vstack((pos[:min_num], neg[:min_num])), [1] * min_num + [0] * min_num )
 
 def confusion_matrix(prediction, groundTruth, target = 1):
     tp = np.sum((prediction == target) * (groundTruth == target))
@@ -100,14 +105,20 @@ def confusion_matrix(prediction, groundTruth, target = 1):
     return precision, recall, f1_score
 
 y = None
-for X, y_ in construct_data("D:/work/cs542/SICKsensor/zwc662/obj_dat/objectdata_2017-07-06.xml", (0.7, 1), batch_size = -1):
-    #pos = np.array([X[i] for i in range(X.shape[0]) if y_[i] == 1])
-    #neg = np.array([X[i] for i in range(X.shape[0]) if y_[i] == 0])
+X, y_ = construct_data("D:/work/cs542/SICKsensor/zwc662/obj_dat/objectdata_2017-07-06.xml", (0, 0.7), batch_size = -1)
+pos = np.array([X[i] for i in range(X.shape[0]) if y_[i] == 1])
+neg = np.array([X[i] for i in range(X.shape[0]) if y_[i] == 0])
 
-    #plotData(pos[:500], neg[:500])
-    y = gaus_svm.predict(X)
-    #np.savetxt("prediction.txt", y)
-    #np.savetxt("GroundTruth.txt", y_)
+plotData(211, fig, pos[:500], neg[:500])
+min_num = min(pos.shape[0], neg.shape[0])
+y = gaus_svm.predict(X)
+
+pos = np.array([X[i] for i in range(X.shape[0]) if y[i] == 1])
+neg = np.array([X[i] for i in range(X.shape[0]) if y[i] == 0])
+plotData(212, fig, pos[:500], neg[:500])
+#np.savetxt("prediction.txt", y)
+#np.savetxt("GroundTruth.txt", y_)
+plt.show()
 precision, recall, f1_score = confusion_matrix(y, y_.flatten(), 1)
 print("LFT as target, precision: {:f}, recall: {:f}, f1_score: {:f}".format(precision, recall, f1_score))
 precision, recall, f1_score = confusion_matrix(y, y_.flatten(), 0)
