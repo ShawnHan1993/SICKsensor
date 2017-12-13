@@ -28,7 +28,7 @@ python main.py TRAIN_1.xml TRAIN_2.xml TRAIN_3.xml ... TRAIN_k.xml VALID.xml TES
 [6]:The model will start to train decoder, validate the model and run anomaly detection immediately after printing a message 'Forecasting!!!!'. After validation is finished, the program will print "Validation loss XXX" and start to run anomaly detection on **TEST.xml**. As there are about 50000 objects in **TEST.xml** and each batch only test on one object, it will take an extremely long time to test the entire file. But user can stop at any time, since the program keeps documenting the finished test results and stores in file **logfile**. 
 
 ## Visualize the result
-The test results and necessary information, e.g. validation error, model error, are stored in **logfile**. Run the following command to draw the plots which include the prediction, the true gap data and confidence interval. The default confidence level is 0.95.
+The test results and necessary information, e.g. validation error, model error, are stored in **logfile**. Run the following command to draw the plots which include the prediction(red line), the true gap data(green line) and confidence interval(grey area). The default confidence level is 0.95.
 ```bash
 python plot.py logfile
 ```
