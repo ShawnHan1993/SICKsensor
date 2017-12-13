@@ -23,9 +23,18 @@ python main.py TRAIN_1.xml TRAIN_2.xml TRAIN_3.xml ... TRAIN_k.xml VALID.xml TES
 ```
  The program will start training the encoder and then train the decoder as well as detect outliers in order.
 
-[5]:Keep observing the messages returned by the program. The time to train and test the encoder depends on the batchsize, which can be modified in **main.py**. The model will print "Pretraining finished!!!!" after finishing pretraining the encoder.****Note that if user want to use the already pre-trained encoder stored in the folder, please comment line 774.****
+[5]:Keep observing the messages returned by the program. The time to train and test the encoder depends on the batchsize, which can be modified in **main.py**. The model will print 
+"Pretraining finished!!!!" after finishing pretraining the encoder.****Note that if user want to use the already pre-trained encoder stored in the folder, please comment line 774.****
 
-[6]:The model will start to train decoder, validate the model and run anomaly detection immediately after printing a message 'Forecasting!!!!'. After validation is finished, the program will print "Validation loss XXX" and start to run anomaly detection on **TEST.xml**. As there are about 50000 objects in **TEST.xml** and each batch only test on one object, it will take an extremely long time to test the entire file. But user can stop at any time, since the program keeps documenting the finished test results and stores in file **logfile**. 
+[6]:The model will start to train decoder, validate the model and run anomaly detection immediately after printing a message
+```bash
+'Forecasting!!!!'.
+```
+After validation is finished, the program will print 
+```bash
+"Validation loss XXX"
+```
+and start to run anomaly detection on **TEST.xml**. As there are about 50000 objects in **TEST.xml** and each batch only test on one object, it will take an extremely long time to test the entire file. But user can stop at any time, since the program keeps documenting the finished test results and stores in file **logfile**. 
 
 ## Visualize the result
 The test results and necessary information, e.g. validation error, model error, are stored in **logfile**. Run the following command to draw the plots which include the prediction(red line), the true gap data(green line) and confidence interval(grey area). The default confidence level is 0.95.
