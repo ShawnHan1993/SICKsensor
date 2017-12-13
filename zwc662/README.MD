@@ -34,7 +34,7 @@ After validation is finished, the program will print
 ```bash
 "Validation loss XXX"
 ```
-and start to run anomaly detection on **TEST.xml**. As there are about 50000 objects in **TEST.xml** and each batch only test on one object, it will take an extremely long time to test the entire file. But user can stop at any time, since the program keeps documenting the finished test results and stores in file **logfile**. 
+and start to run anomaly detection on **TEST.xml**. As there are about 50000 objects in **TEST.xml** and in each batch only one object is tested, it will take an extremely long time to test the entire file. But user can stop at any time, since the program keeps documenting the finished test on each single object and write to file **logfile**. 
 
 ## Visualize the result
 The test results and necessary information, e.g. validation error, model error, are stored in **logfile**. Run the following command to draw the plots which include the prediction(red line), the true gap data(green line) and confidence interval(grey area). The default confidence level is 0.95.
