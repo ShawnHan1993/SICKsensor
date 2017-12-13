@@ -1,10 +1,11 @@
-**README**
+# README
 
-***Anomaly Detection***
+## Anomaly Detection
 
-Preprocessed data are already in ./obj_dat. To re-extract them, find path to the data set $DATASET and use ext.py to extract data to the current folder. The filenames are 'objdata_2017_XXXX.xml'.
+### Extract data
+Data are already extracted in ./obj_dat. To re-extract them, find path to the data set ***$DATASET*** and use ext.py to extract data to the current folder. The filenames of the extracted data should be 'objectdata_XXXXXXXX.xml'.
 ```bash
-python ext.py $DATASET
+python ext.py ***$DATASET***
 ```
 
-Move 
+Move the generated xml files to ./obj_dat folder. Find 
