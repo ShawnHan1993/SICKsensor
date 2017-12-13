@@ -740,9 +740,9 @@ def forecast(train_data_main, validation_data, test_data):
 		output_file.close()
 
 def unbias_train_NotLFT():
-	train_data_main = sys.argv[1 : ]
-	train_data_aux = sys.argv[2:3]
-	test_data = sys.argv[3: ]
+	train_data_main = sys.argv[1:-2]
+	train_data_aux = sys.argv[-2:-1]
+	test_data = sys.argv[-1:]
 	
 	test_file = open('test' + str(test_data), 'w')
 	for token_batch in sequence_build(test_data, normalize = [False, False]):
@@ -772,6 +772,9 @@ def unbias_train_NotLFT():
 	#mlp_train(train_data_main, test_data)
 	#train_data_aux = []
 	pre_train(train_data_main, train_data_aux, test_data)
+	print("Pretraining finished!!!!")
+	
+	print("Forecasting!!!!")
 	forecast(train_data_main, train_data_aux, test_data)
 	
 
