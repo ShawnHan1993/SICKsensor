@@ -1,7 +1,6 @@
 **README**
-
-In test.py there is a 2-layer fully connected neural network train() and a dataset feeding function single_file().
-
-singl_file() takes a xml file from ./obj_dat/ folder and yields an dataset iterator.
-
-The yielded dataset can be used as trainning data as well as test data.
+***Anomaly Detection***
+Preprocessed data are already in ./obj_dat. To re-extract the data, find path to the data set $DATASET and run ext.py to extract data to the current folder.
+```bash
+python ext.py $DATASET
+```
