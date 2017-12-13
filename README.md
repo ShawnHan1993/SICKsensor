@@ -1,4 +1,4 @@
-# Instructions foor running code
+# Instructions for running code
 
 To execute the code for the trend analysis in section 3.1 of the report, run the following
 
