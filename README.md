@@ -15,3 +15,5 @@ $ python svm.py
 Notice that the line 92 changes the kernel of svm
 
 Please note that this requires scikit-learn 0.19.1 for the use of the MLPClassifier
+
+Check README.md in ./zwc662 and follow the instructions to implement anomaly detection.
