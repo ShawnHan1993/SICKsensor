@@ -7,7 +7,7 @@ python ext.py $DATASET
 ```
 Then move the generated xml files to ./obj_dat folder. 
 
-##Run model
+## Run model
 Find preprocessed data files under ./obj_data. The filenames are all 'objectdata_XXXXXXXX.xml'.
 Find main.py under ./obj_dat and follow the instructions below to run the model.
 
