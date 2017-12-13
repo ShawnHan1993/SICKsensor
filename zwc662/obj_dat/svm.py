@@ -11,7 +11,6 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
 def plotData(layout, fig, pos, neg=None, cPos='r',markPos='o', cNeg='b', markNeg='^', mySvm=None):
-    
     ax = fig.add_subplot(layout, projection='3d')
     pca = PCA(n_components=3)
     pos_pca = pca.fit_transform(pos)
